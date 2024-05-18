@@ -7,13 +7,13 @@ from unicodedata import east_asian_width
 # Config options
 
 # (int) : Length of media info string. If length of string exceedes this value, the text will scroll. Default value is 20
-message_display_len = 20
+message_display_len = 30
 
 # (int) : Font index of polybar. this value should be 1 more than the font value specified in polybar config.
 font_index = 1
 
 # (float) : Update speed of the text in seconds.
-update_delay = 0.3
+update_delay = 0.4
 
 # (list) : list of chars containing previous, play, pause, next glyphs for media controls in respective order
 control_chars = ['','','','']
@@ -23,9 +23,7 @@ control_chars = ['','','','']
 # else default key value.
 # example:
 display_player_prefix = {
-    "spotify":  '',
-    "firefox":  '',
-    "default":  ''
+        "default": ""
 }
 
 # (list) : list of metadata fields based on mpris sepecification.
@@ -33,10 +31,10 @@ display_player_prefix = {
 metadata_fields = ["xesam:title", "xesam:artist"]
 
 # (char) : separator for metadata fields
-metadata_separator = "-"
+metadata_separator = "|"
 
 # (bool) : Hide text when no player is available? True disables the output for no players.
-hide_output = False
+hide_output = True
 
 # Defult initialization
 current_player = None
@@ -89,7 +87,7 @@ def update_prefix_suffix(player_name="", status=""):
     pause_button = "%%{A:playerctl %s pause :}%c%%{A}"      %(player_option,control_chars[2])
     next_button = "%%{A:playerctl %s next :}%c%%{A}"        %(player_option,control_chars[3])
 
-    suffix = "| " + prev_button
+    suffix = " " + prev_button
     if status == "Playing":
         suffix += " "+pause_button
         status_paused = False
@@ -136,12 +134,14 @@ def update_message():
         status = get_status(players[current_player])
         metadata_obj = get_metadata(players[current_player])
         metadata_string_list = []
+        
         for field in metadata_fields:
             result = metadata_obj.get(field)
             if type(result) == dbus.Array:
                 result = result[0]
             if not result:
-                result = "No "+field.split(":")[1]
+                result = ""
+                
             metadata_string_list.append(str(result))
         metadata_string = (" "+metadata_separator+" ").join(metadata_string_list)
         if visual_len(metadata_string) > message_display_len:
@@ -157,11 +157,11 @@ def update_message():
 
 def scroll():
     global display_text, message_display_len, status_paused
-    if not status_paused:
-        if visual_len(display_text) > message_display_len:
-            display_text = display_text[1:] + display_text[0]
-        elif visual_len(display_text) < message_display_len:
-            display_text += " "*(message_display_len - len(display_text))
+    if visual_len(display_text) > message_display_len:
+        display_text = display_text[1:] + display_text[0]
+    #elif visual_len(display_text) < message_display_len:
+    #    gap = " "*(message_display_len - len(display_text))
+    #    display_text = gap + display_text
 
 def visual_len(text):
     visual_length = 0
@@ -186,9 +186,9 @@ def make_visual_len(text, visual_desired_length):
         else:
             break
     if visual_length == visual_desired_length + 1:
-        altered_text = altered_text[:-1] + ' '
-    elif visual_length < visual_desired_length:
-        altered_text += ' ' * (visual_desired_length - visual_length)
+        altered_text = altered_text[:-1] 
+    #elif visual_length < visual_desired_length:
+    #    altered_text += ' ' * (visual_desired_length - visual_length)
     return altered_text
 
 def print_text():
@@ -197,10 +197,10 @@ def print_text():
         print("", flush = True)
         return
     scroll()
-    print(display_prefix + " " +
+    print(display_prefix + "" +
         "%%{T%d}" % (font_index) +
         make_visual_len(display_text, message_display_len) +
-        "%{T-}" + display_suffix, flush=True)
+        "%{T-}", flush=True)
 
 def main():
     global current_player, players
